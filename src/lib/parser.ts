@@ -1,8 +1,12 @@
-import type { PlaylistData, MediaItem } from './types';
+import type { PlaylistData, MediaItem, MediaType } from './types';
+import fs from 'fs/promises';
+import path from 'path';
 
 const M3U_URL = 'http://filex.me:8080/get.php?username=MAS101A&password=MAS101AABB&type=m3u_plus&output=m3u8';
+const CACHE_FILE_PATH = path.join(process.cwd(), '.next', 'playlist_cache.json');
+const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
-function getMediaType(url: string, groupTitle: string): 'live' | 'movie' | 'series' {
+function getMediaTypeFromUrl(url: string, groupTitle: string): 'live' | 'movie' | 'series' {
   if (url.includes('/movie/')) {
     return 'movie';
   }
@@ -31,11 +35,8 @@ function parseAttributes(line: string): Record<string, string> {
   return attributes;
 }
 
-export async function parseXtreamPlaylist(): Promise<PlaylistData> {
-  try {
-    const response = await fetch(M3U_URL, {
-      next: { revalidate: 3600 }, // Cache for 1 hour
-    });
+async function fetchAndParseM3U(): Promise<PlaylistData> {
+    const response = await fetch(M3U_URL);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch playlist: ${response.statusText}`);
@@ -70,7 +71,7 @@ export async function parseXtreamPlaylist(): Promise<PlaylistData> {
         const attributes = parseAttributes(infoLine);
         
         const category = attributes['group-title'] || 'Uncategorized';
-        const mediaType = getMediaType(urlLine, category);
+        const mediaType = getMediaTypeFromUrl(urlLine, category);
 
         const item: MediaItem = {
           id: urlLine, // URL is a reliable unique ID
@@ -108,8 +109,66 @@ export async function parseXtreamPlaylist(): Promise<PlaylistData> {
         series: Array.from(categorySet.series).sort(),
       },
     };
+}
+
+async function getCachedPlaylist(): Promise<PlaylistData | null> {
+  try {
+    const fileStats = await fs.stat(CACHE_FILE_PATH);
+    const isCacheValid = (Date.now() - fileStats.mtime.getTime()) < CACHE_DURATION_MS;
+    
+    if (isCacheValid) {
+      const cachedData = await fs.readFile(CACHE_FILE_PATH, 'utf-8');
+      return JSON.parse(cachedData);
+    }
+    return null;
   } catch (error) {
-    console.error("Error parsing M3U playlist:", error);
+    // If file doesn't exist or other errors, return null to fetch fresh data
+    return null;
+  }
+}
+
+async function updatePlaylistCache() {
+  try {
+    console.log('Refreshing playlist cache...');
+    const playlistData = await fetchAndParseM3U();
+    await fs.mkdir(path.dirname(CACHE_FILE_PATH), { recursive: true });
+    await fs.writeFile(CACHE_FILE_PATH, JSON.stringify(playlistData), 'utf-8');
+    console.log('Playlist cache refreshed successfully.');
+    return playlistData;
+  } catch (error) {
+    console.error('Failed to update playlist cache:', error);
+    throw error;
+  }
+}
+
+export async function parseXtreamPlaylist(requestedType: MediaType, forceRefresh = false): Promise<PlaylistData> {
+  try {
+    let playlistData = forceRefresh ? null : await getCachedPlaylist();
+    
+    if (!playlistData) {
+      playlistData = await updatePlaylistCache();
+    }
+
+    const filterData = (data: MediaItem[]) => data.filter(item => item.type === requestedType);
+
+    switch (requestedType) {
+      case 'live':
+        return { ...playlistData, channels: playlistData.channels, movies: [], series: [] };
+      case 'movie':
+        return { ...playlistData, movies: playlistData.movies, channels: [], series: [] };
+      case 'series':
+        return { ...playlistData, series: playlistData.series, channels: [], movies: [] };
+      default:
+        return playlistData;
+    }
+  } catch (error) {
+    console.error("Error getting playlist:", error);
+    // Fallback: try to read from cache even if it's stale
+    const staleCache = await getCachedPlaylist().catch(() => null);
+    if(staleCache) {
+      console.warn("Serving stale cache due to fetch error.");
+      return staleCache;
+    }
     throw new Error("Could not load or parse the playlist.");
   }
 }
