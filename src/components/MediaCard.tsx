@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from 'next/image';
@@ -27,7 +28,7 @@ export default function MediaCard({ item }: MediaCardProps) {
   const aspectRatio = item.type === 'live' ? 'aspect-video' : 'aspect-[2/3]';
   const listImageSize = item.type === 'live' ? 'w-[80px] h-[45px]' : 'w-[40px] h-[60px]';
 
-  const CardImage = (
+  const CardImage = () => (
     <div className={cn(
       "relative overflow-hidden bg-zinc-800 rounded-md flex-shrink-0 group",
       viewMode === 'grid' ? aspectRatio : listImageSize
@@ -54,7 +55,7 @@ export default function MediaCard({ item }: MediaCardProps) {
     </div>
   );
 
-  const CardInfo = (
+  const CardInfo = () => (
     <div className="flex-grow overflow-hidden">
       <p className="font-medium text-sm truncate text-white">{item.name}</p>
       <p className="text-xs text-gray-400 truncate">{item.category}</p>
