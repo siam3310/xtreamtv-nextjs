@@ -45,8 +45,8 @@ export default function XtreamApp({ initialData, mediaType, error }: XtreamAppPr
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-4rem)]">
-      <div className="w-full lg:w-[70%] lg:border-r border-white/10 bg-black flex-shrink-0 h-[56.25vw] lg:h-auto">
+    <div className="flex flex-col lg:flex-row">
+      <div id="video-player-container" className="w-full lg:w-[70%] lg:border-r border-white/10 bg-black flex-shrink-0 h-[56.25vw] lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16">
         <VideoPlayer />
       </div>
       <div className="w-full lg:w-[30%] flex flex-col overflow-hidden">

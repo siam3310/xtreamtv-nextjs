@@ -28,6 +28,14 @@ export default function MediaCard({ item }: MediaCardProps) {
   const aspectRatio = item.type === 'live' ? 'aspect-video' : 'aspect-[2/3]';
   const listImageSize = item.type === 'live' ? 'w-[80px] h-[45px]' : 'w-[40px] h-[60px]';
 
+  const handleClick = () => {
+    playMedia(item);
+    const playerContainer = document.getElementById('video-player-container');
+    if (playerContainer) {
+      playerContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const CardImage = () => (
     <div className={cn(
       "relative overflow-hidden bg-zinc-800 rounded-md flex-shrink-0 group",
@@ -64,7 +72,7 @@ export default function MediaCard({ item }: MediaCardProps) {
 
   return (
     <button
-      onClick={() => playMedia(item)}
+      onClick={handleClick}
       className={cn(
         'w-full text-left rounded-lg transition-colors bg-zinc-900',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring focus-visible:ring-offset-black',
