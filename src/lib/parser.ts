@@ -104,9 +104,9 @@ async function fetchAndParseM3U(): Promise<PlaylistData> {
       movies,
       series,
       categories: {
-        live: Array.from(categorySet.live).sort(),
-        movie: Array.from(categorySet.movie).sort(),
-        series: Array.from(categorySet.series).sort(),
+        live: Array.from(categorySet.live),
+        movie: Array.from(categorySet.movie),
+        series: Array.from(categorySet.series),
       },
     };
 }
