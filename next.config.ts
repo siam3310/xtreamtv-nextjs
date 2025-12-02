@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'img-cdn.curl.pk',
+        port: '8880',
+        pathname: '/**',
+      },
     ],
   },
 };
