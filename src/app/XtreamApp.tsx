@@ -5,7 +5,7 @@ import { useStore } from '@/store/useStore';
 import type { PlaylistData, MediaType } from '@/lib/types';
 import VideoPlayer from '@/components/VideoPlayer';
 import ContentBrowser from '@/components/ContentBrowser';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface XtreamAppProps {
   initialData: PlaylistData;
