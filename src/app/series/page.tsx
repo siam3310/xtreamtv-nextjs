@@ -1,9 +1,9 @@
 import { parseXtreamPlaylist } from '@/lib/parser';
-import XtreamApp from './XtreamApp';
+import XtreamApp from '../XtreamApp';
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 3600;
 
-export default async function LiveTvPage() {
+export default async function SeriesPage() {
   let playlistData;
   let error;
   try {
@@ -12,6 +12,6 @@ export default async function LiveTvPage() {
     error = e instanceof Error ? e.message : 'An unknown error occurred';
     playlistData = { channels: [], movies: [], series: [], categories: {live: [], movie: [], series: []} };
   }
-  
-  return <XtreamApp initialData={playlistData} mediaType="live" error={error} />;
+
+  return <XtreamApp initialData={playlistData} mediaType="series" error={error} />;
 }
