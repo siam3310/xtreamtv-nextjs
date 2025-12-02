@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { MediaItem, PlaylistData, MediaType, ViewMode } from '@/lib/types';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 50;
 
 interface AppState {
   // Raw data
@@ -49,27 +49,16 @@ export const useStore = create<AppState>()(
       currentlyPlaying: null,
 
       initializeData: (data, mediaType) => {
-        const update: Partial<AppState> = {
+        set({
           mediaType: mediaType,
+          allChannels: data.channels,
+          allMovies: data.movies,
+          allSeries: data.series,
+          categories: data.categories,
           searchQuery: '',
           categoryFilter: 'All',
           currentPage: 1,
-        };
-
-        if (mediaType === 'live') {
-          update.allChannels = data.channels;
-          update.categories = { ...get().categories, live: data.categories.live };
-        }
-        if (mediaType === 'movie') {
-          update.allMovies = data.movies;
-          update.categories = { ...get().categories, movie: data.categories.movie };
-        }
-        if (mediaType === 'series') {
-          update.allSeries = data.series;
-          update.categories = { ...get().categories, series: data.categories.series };
-        }
-        
-        set(update);
+        });
       },
       
       setMediaType: (type) => {

@@ -1,13 +1,14 @@
-import { parseXtreamPlaylist } from '@/lib/parser';
+import { getPlaylistDataForType } from '@/lib/parser';
 import XtreamApp from '../XtreamApp';
 
-export const revalidate = 0; // Disable revalidation, we handle caching manually
+export const revalidate = 0;
 
-export default async function SeriesPage() {
+export default function SeriesPage() {
   let playlistData;
   let error;
   try {
-    playlistData = await parseXtreamPlaylist('series');
+    // This now reads from pre-generated JSON files
+    playlistData = getPlaylistDataForType('series');
   } catch (e) {
     error = e instanceof Error ? e.message : 'An unknown error occurred';
     playlistData = { channels: [], movies: [], series: [], categories: {live: [], movie: [], series: []} };
