@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { MediaItem, PlaylistData, MediaType, ViewMode } from '@/lib/types';
 
-const ITEMS_PER_PAGE = 50;
+const ITEMS_PER_PAGE = 10;
 
 interface AppState {
   // Raw data

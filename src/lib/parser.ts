@@ -3,8 +3,17 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const M3U_URL = 'http://filex.me:8080/get.php?username=MAS101A&password=MAS101AABB&type=m3u_plus&output=m3u8';
-const CACHE_FILE_PATH = path.join(process.cwd(), '.next', 'playlist_cache.json');
+const CACHE_DIR = path.join(process.cwd(), '.next', 'cache');
 const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.stat(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function getMediaTypeFromUrl(url: string, groupTitle: string): 'live' | 'movie' | 'series' {
   if (url.includes('/movie/')) {
@@ -111,45 +120,53 @@ async function fetchAndParseM3U(): Promise<PlaylistData> {
     };
 }
 
-async function getCachedPlaylist(): Promise<PlaylistData | null> {
-  try {
-    const fileStats = await fs.stat(CACHE_FILE_PATH);
-    const isCacheValid = (Date.now() - fileStats.mtime.getTime()) < CACHE_DURATION_MS;
-    
-    if (isCacheValid) {
-      const cachedData = await fs.readFile(CACHE_FILE_PATH, 'utf-8');
-      return JSON.parse(cachedData);
-    }
-    return null;
-  } catch (error) {
-    // If file doesn't exist or other errors, return null to fetch fresh data
-    return null;
-  }
-}
-
 async function updatePlaylistCache() {
   try {
     console.log('Refreshing playlist cache...');
     const playlistData = await fetchAndParseM3U();
-    await fs.mkdir(path.dirname(CACHE_FILE_PATH), { recursive: true });
-    await fs.writeFile(CACHE_FILE_PATH, JSON.stringify(playlistData), 'utf-8');
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+
+    const fullData: PlaylistData = {
+        channels: playlistData.channels,
+        movies: playlistData.movies,
+        series: playlistData.series,
+        categories: playlistData.categories
+    };
+
+    await fs.writeFile(path.join(CACHE_DIR, 'full_playlist.json'), JSON.stringify(fullData), 'utf-8');
+    
     console.log('Playlist cache refreshed successfully.');
-    return playlistData;
+    return fullData;
   } catch (error) {
     console.error('Failed to update playlist cache:', error);
     throw error;
   }
 }
 
-export async function parseXtreamPlaylist(requestedType: MediaType, forceRefresh = false): Promise<PlaylistData> {
+async function getPlaylistData(): Promise<PlaylistData> {
+  const cacheFilePath = path.join(CACHE_DIR, 'full_playlist.json');
+  
   try {
-    let playlistData = forceRefresh ? null : await getCachedPlaylist();
-    
-    if (!playlistData) {
-      playlistData = await updatePlaylistCache();
+    if (await fileExists(cacheFilePath)) {
+      const stats = await fs.stat(cacheFilePath);
+      const isCacheValid = (Date.now() - stats.mtime.getTime()) < CACHE_DURATION_MS;
+      if (isCacheValid) {
+        const cachedData = await fs.readFile(cacheFilePath, 'utf-8');
+        return JSON.parse(cachedData);
+      }
     }
+  } catch (e) {
+    console.error("Error reading cache, will refetch.", e);
+  }
+  
+  // If cache is invalid or doesn't exist, refetch
+  return await updatePlaylistCache();
+}
 
-    const filterData = (data: MediaItem[]) => data.filter(item => item.type === requestedType);
+
+export async function parseXtreamPlaylist(requestedType: MediaType): Promise<PlaylistData> {
+  try {
+    const playlistData = await getPlaylistData();
 
     switch (requestedType) {
       case 'live':
@@ -159,16 +176,12 @@ export async function parseXtreamPlaylist(requestedType: MediaType, forceRefresh
       case 'series':
         return { ...playlistData, series: playlistData.series, channels: [], movies: [] };
       default:
-        return playlistData;
+        // This case should ideally not be hit if types are correct
+        return { channels: [], movies: [], series: [], categories: { live: [], movie: [], series: [] }};
     }
   } catch (error) {
     console.error("Error getting playlist:", error);
-    // Fallback: try to read from cache even if it's stale
-    const staleCache = await getCachedPlaylist().catch(() => null);
-    if(staleCache) {
-      console.warn("Serving stale cache due to fetch error.");
-      return staleCache;
-    }
-    throw new Error("Could not load or parse the playlist.");
+    // On error, return empty data structure to prevent app crash
+    return { channels: [], movies: [], series: [], categories: { live: [], movie: [], series: [] }};
   }
 }
