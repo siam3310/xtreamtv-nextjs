@@ -29,9 +29,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <div className="flex flex-col h-screen bg-black text-white">
+        <div className="min-h-screen bg-black text-white">
           <Navbar />
-          <main className="flex-grow overflow-hidden">{children}</main>
+          <main>{children}</main>
           <Toaster />
         </div>
       </body>

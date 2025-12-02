@@ -45,11 +45,11 @@ export default function XtreamApp({ initialData, mediaType, error }: XtreamAppPr
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-full">
-      <div className="w-full lg:w-[70%] lg:border-r border-white/10 bg-black flex-shrink-0 h-1/2 lg:h-full">
+    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-4rem)]">
+      <div className="w-full lg:w-[70%] lg:border-r border-white/10 bg-black flex-shrink-0 h-[56.25vw] lg:h-auto">
         <VideoPlayer />
       </div>
-      <div className="w-full lg:w-[30%] flex flex-col overflow-hidden h-1/2 lg:h-full">
+      <div className="w-full lg:w-[30%] flex flex-col overflow-hidden">
         <ContentBrowser />
       </div>
     </div>

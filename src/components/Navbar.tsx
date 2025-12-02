@@ -58,7 +58,7 @@ export function Navbar() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/90 backdrop-blur-sm flex-shrink-0">
+    <header className="relative w-full border-b border-white/10 bg-black flex-shrink-0">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg" onClick={() => handleLinkClick('/')}>
           <LogoIcon className="h-6 w-6 text-white" />
